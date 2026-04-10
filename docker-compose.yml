@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: whatsapp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - whatsapp_net
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - whatsapp_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DB_URL=postgresql://postgres:password@postgres:5432/whatsapp?schema=public
+      - REDIS_URL=redis://redis:6379
+      # Set Meta variables dynamically via env when running compose
+      - VERIFY_TOKEN=${VERIFY_TOKEN:-test_verify_token}
+      - WHATSAPP_TOKEN=${WHATSAPP_TOKEN:-test_whatsapp_token}
+      - PHONE_NUMBER_ID=${PHONE_NUMBER_ID:-test_phone_number_id}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - whatsapp_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_BACKEND_URL=http://localhost:3000
+    ports:
+      - "3001:3001"
+    environment:
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:3000
+    depends_on:
+      - backend
+    networks:
+      - whatsapp_net
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  whatsapp_net:
+    driver: bridge

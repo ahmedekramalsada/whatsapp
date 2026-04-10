@@ -1,95 +1,127 @@
-# Implementation Plan: 001-whatsapp-dashboard
+# Implementation Plan: [FEATURE]
 
-**Branch**: `001-whatsapp-dashboard` | **Date**: 2026-04-10 | **Spec**: `/specs/001-whatsapp-dashboard/spec.md`
-**Input**: Feature specification from `/specs/001-whatsapp-dashboard/spec.md`
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
 ## Summary
 
-Build a full-stack WhatsApp chat dashboard to receive Meta API webhooks, manage conversations in real-time, send compliant messages, and present it all through a structured React/Next.js dashboard backed by Node.js, Express, PostgreSQL, and Redis/BullMQ. It will be fully containerized via Docker and deployable to K3s Kubernetes.
+The goal is to evolve the current WhatsApp dashboard from a basic messaging tool into a professional-grade, "best-in-class" communication hub. This involves adding enterprise features like authentication, template management, advanced analytics, and AI-assisted responses, while maintaining the "Premium Aesthetics" defined in the Constitution.
 
 ## Technical Context
 
-**Language/Version**: TypeScript 5+, Node.js v20+  
-**Primary Dependencies**: Next.js App Router, Express.js, Prisma ORM, Socket.IO, BullMQ, Tailwind CSS, shadcn/ui.
-**Storage**: PostgreSQL (Relational Data), Redis (Queue & Caching)  
-**Testing**: Jest (Backend unit tests), Playwright or Cypress (Frontend E2E, OPTIONAL)  
-**Target Platform**: Linux server, K3s cluster, Docker containers
-**Project Type**: Full-stack Web Application (Frontend + Webhook API + Background Worker)  
-**Performance Goals**: Sub-500ms webhook response time to satisfy Meta requirements, near-instant WebSocket delivery.  
-**Constraints**: Deeply strict 24-hour customer service window logic preventing arbitrary notifications.  
-**Scale/Scope**: Handling standard WhatsApp SMB workloads; isolated Docker deployment setup.
+**Language/Version**: Node.js 20, TypeScript 5, Next.js 14+ (App Router)
+**Primary Dependencies**: Prisma, Socket.io, BullMQ, Tailwind CSS, Shadcn UI
+**Storage**: PostgreSQL (Messages, Users, Conversations), Redis (Queues)
+**Testing**: NEEDS CLARIFICATION (Plan to add Jest/Playwright)
+**Target Platform**: Linux/Docker (Deployable to K3s)
+**Project Type**: Web Application (Monorepo-style with Docker Compose)
+**Performance Goals**: Instant Socket.io broadcasts (<50ms), Queue processing < 2s
+**Constraints**: 24-hour Meta messaging rule, high webhook volume resilience
+**Scale/Scope**: Support for thousands of messages per day across multiple agents
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+*GATE: Must pass before Phase 0 research. Recheck after Phase 1 design.*
 
-- [x] **I. Best Practice Implementations**: We will utilize Next.js App Router and Prisma ORM.
-- [x] **II. Persistence of Knowledge**: Using project_notes.md and local specs.
-- [x] **III. Continuous Documentation**: Quickstart will be defined, and README updated.
-- [x] **IV. Proactive Commits**: Tracked via `before_*` hook configurations.
-- [x] **V. Modern Premium Aesthetics**: Next.js, Tailwind CSS, shadcn/ui.
-- [x] **DevOps Requirements**: Full dockerization provided.
+- [x] **Principle I (Best Practices)**: Use App Router, Prisma, and BullMQ. (Pass)
+- [x] **Principle II (Persistence)**: Decisions documented in `project_notes.md`. (Pass)
+- [x] **Principle III (Documentation)**: README to be updated after build. (Pass)
+- [x] **Principle IV (Git)**: Workflow includes sync pause. (Pass)
+- [x] **Principle V (Aesthetics)**: Shadcn UI and premium design required. (Pass)
+
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/001-whatsapp-dashboard/
-├── plan.md              
-├── research.md          
-├── data-model.md        
-├── quickstart.md        
-└── contracts/           
+specs/[###-feature]/
+├── plan.md              # This file (/speckit.plan command output)
+├── research.md          # Phase 0 output (/speckit.plan command)
+├── data-model.md        # Phase 1 output (/speckit.plan command)
+├── quickstart.md        # Phase 1 output (/speckit.plan command)
+├── contracts/           # Phase 1 output (/speckit.plan command)
+└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
 ```
 
 ### Source Code (repository root)
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+-->
 
 ```text
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
+src/
+├── models/
+├── services/
+├── cli/
+└── lib/
+
+tests/
+├── contract/
+├── integration/
+└── unit/
+
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
 backend/
 ├── src/
-│   ├── api/
-│   │   ├── webhooks.ts
-│   │   └── messages.ts
-│   ├── config/
-│   ├── db/
-│   │   └── prisma/
-│   ├── queues/
-│   │   └── bullmq.ts
+│   ├── models/
 │   ├── services/
-│   │   ├── whatsapp.ts
-│   │   └── media.ts
-│   └── websocket/
-│       └── socket.ts
-├── Dockerfile
-└── package.json
+│   └── api/
+└── tests/
 
 frontend/
 ├── src/
-│   ├── app/
 │   ├── components/
-│   │   ├── ui/
-│   │   └── chat/
-│   └── lib/
-│       └── socket.ts
-├── Dockerfile
-└── package.json
+│   ├── pages/
+│   └── services/
+└── tests/
 
-k8s/
-├── backend/
-├── frontend/
-├── postgres/
-├── redis/
-└── ingress.yaml
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
 
-docker-compose.yml
-project_notes.md
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-**Structure Decision**: Option 2 (Web application separated frontend and backend + dedicated K8s folder). This ensures distinct containerization and allows separation of webhook processing from React rendering boundaries.
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
 
 ## Complexity Tracking
 
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| Multiple components (Queue worker + API) | Webhooks must respond in under 5 seconds (Meta requirement), necessitating background workers for attachments/complex sending. | Direct synchronous sending blocks API workers and can cause Meta to drop webhooks. |
+> **Fill ONLY if Constitution Check has violations that must be justified**
+
+## Proposed Implementation Phases
+
+### Phase 1: Interactive Messaging & Templates
+- [ ] Implement `GET /api/messages/templates` to fetch approved Meta templates.
+- [ ] Add Template selection UI in `ChatInput`.
+- [ ] Support "Button" and "List" message types in both backend and frontend.
+- [ ] Add read receipts (Webhook `read` status update logic).
+
+### Phase 2: Contact Management & Labels
+- [ ] Create `Contact` table and sync existing users.
+- [ ] Add "Contact Details" sidebar in the chat window.
+- [ ] Implement Contact Search and Labeling (e.g. "VIP", "New Customer").
+
+### Phase 3: Premium Aesthetics & DX
+- [ ] Implement "Dark Mode" toggle.
+- [ ] Add desktop "Push Notifications" (Service Worker).
+- [ ] Integrate **Tremor** dashboard for daily message analytics.
+
+## Verification Plan
+
+### Automated Tests
+- `npm run test:backend`: Test Meta API integration mock.
+- `npm run test:e2e`: Playwright tests for "New Message -> UI update" flow.
+
+### Manual Verification
+- Send a template message to a user after 24h of inactivity.
+- Verify status changes (Pending -> Sent -> Read) visually.
+- Verify AI suggestions appear correctly in the input field.

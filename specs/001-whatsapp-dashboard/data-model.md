@@ -1,51 +1,34 @@
-# Phase 1: Data Model
+# Data Model: Premium WhatsApp Dashboard
 
-## PostgreSQL (Prisma Schema)
+## New Entities
 
-```prisma
-datasource db {
-  provider = "postgresql"
-  url      = env("DB_URL")
-}
+### User (Existing, but adding Auth)
+- `email`: String (Unique)
+- `image`: String (Profile pic)
+- `role`: Enum (ADMIN, AGENT)
 
-generator client {
-  provider = "prisma-client-js"
-}
+### Contact [NEW]
+- `id`: UUID (PK)
+- `phone_number`: String (Unique)
+- `name`: String
+- `labels`: String[] (e.g., "VIP", "Lead")
+- `notes`: Text
+- `created_at`: DateTime
 
-model User {
-  id           String         @id @default(uuid())
-  phone_number String         @unique
-  name         String?
-  created_at   DateTime       @default(now())
-  
-  conversations Conversation[]
-}
+### Message (Updating)
+- `status`: Enum (PENDING, SENT, DELIVERED, READ, FAILED)
+- `type`: Enum (TEXT, IMAGE, DOCUMENT, AUDIO, VIDEO, BUTTON_RESPONSE, LIST_RESPONSE, TEMPLATE)
+- `template_name`: String (Nullable)
+- `metadata`: JSON (For buttons/interactive info)
 
-model Conversation {
-  id              String    @id @default(uuid())
-  user_id         String
-  last_message_at DateTime
-  status          String    @default("open") // "open", "closed"
-  created_at      DateTime  @default(now())
-  
-  user            User      @relation(fields: [user_id], references: [id])
-  messages        Message[]
-}
+### AutomationRule [NEW]
+- `id`: UUID (PK)
+- `name`: String
+- `trigger`: String (e.g., "KEYWORD")
+- `action`: String (e.g., "AUTO_REPLY", "ASSIGN_TAG")
+- `enabled`: Boolean
 
-model Message {
-  id               String       @id @default(uuid())
-  conversation_id  String
-  from_me          Boolean      @default(false)
-  message_text     String?
-  media_url        String?
-  timestamp        DateTime     @default(now())
-  status           String       @default("sent") // "sent", "delivered", "read"
-  
-  conversation     Conversation @relation(fields: [conversation_id], references: [id])
-}
-```
-
-## Validation Rules
-- `phone_number` must be uniquely constrained to prevent duplicate User entries when a single number contacts the webhook multiple times.
-- If `media_url` is null, it signifies a standard text message. If it is populated, `message_text` may be null (an image without caption) or populated (an image with caption).
-- `last_message_at` inside `Conversation` dictates the 24-hour enforcement window.
+## Relationships
+- `User` 1:N `Conversation` (Assignment)
+- `Contact` 1:1 `Conversation` (The user we are chatting with)
+- `Conversation` 1:N `Message`
