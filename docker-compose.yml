@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-whatsapp}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - whatsapp_net
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - whatsapp_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - DB_URL=${DB_URL:?set DB_URL in .env}
+      - REDIS_URL=redis://redis:6379
+      # Meta variables must be set in .env — no test defaults
+      - VERIFY_TOKEN=${VERIFY_TOKEN:?set VERIFY_TOKEN in .env}
+      - WHATSAPP_TOKEN=${WHATSAPP_TOKEN:?set WHATSAPP_TOKEN in .env}
+      - PHONE_NUMBER_ID=${PHONE_NUMBER_ID:?set PHONE_NUMBER_ID in .env}
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - whatsapp_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_BACKEND_URL=http://localhost:3000
+    ports:
+      - "3001:3001"
+    environment:
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:3000
+    depends_on:
+      - backend
+    networks:
+      - whatsapp_net
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  whatsapp_net:
+    driver: bridge

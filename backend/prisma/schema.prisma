@@ -1,0 +1,73 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  DOCUMENT
+  AUDIO
+  VIDEO
+  BUTTON_RESPONSE
+  LIST_RESPONSE
+  TEMPLATE
+}
+
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  password     String?
+  name         String?
+  role         String         @default("AGENT") // "ADMIN", "AGENT"
+  created_at   DateTime       @default(now())
+}
+
+model Contact {
+  id           String         @id @default(uuid())
+  phone_number String         @unique
+  name         String?
+  labels       String[]       @default([])
+  notes        String?
+  created_at   DateTime       @default(now())
+  
+  conversations Conversation[]
+}
+
+model Conversation {
+  id              String    @id @default(uuid())
+  contact_id      String
+  last_message_at DateTime
+  status          String    @default("open") // "open", "closed"
+  created_at      DateTime  @default(now())
+  
+  contact         Contact   @relation(fields: [contact_id], references: [id])
+  messages        Message[]
+}
+
+model Message {
+  id               String       @id @default(uuid())
+  conversation_id  String
+  wa_id            String?      @unique // ID returned by Meta
+  from_me          Boolean      @default(false)
+  message_text     String?
+  media_url        String?
+  type             MessageType  @default(TEXT)
+  metadata         Json?        // For storing button/interactive payloads
+  timestamp        DateTime     @default(now())
+  status           MessageStatus @default(SENT)
+  
+  conversation     Conversation @relation(fields: [conversation_id], references: [id])
+}
